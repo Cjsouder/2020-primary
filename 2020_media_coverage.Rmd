@@ -1,0 +1,36 @@
+---
+title: "2020 Media Coverage"
+author: "Hoda Abdalla"
+date: "10/1/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readxl)
+```
+
+```{r}
+x <- read_csv(file = "https://raw.githubusercontent.com/fivethirtyeight/data/master/media-mentions-2020/cable_weekly.csv", 
+              col_types = cols(
+  date = col_date(format = ""),
+  name = col_character(),
+  matched_clips = col_double(),
+  all_candidate_clips = col_double(),
+  total_clips = col_double(),
+  pct_of_all_candidate_clips = col_double(),
+  query = col_character()
+))
+
+y <- read_csv(file = "https://raw.githubusercontent.com/fivethirtyeight/data/master/media-mentions-2020/online_weekly.csv",
+              col_types = cols(
+  date = col_date(format = ""),
+  name = col_character(),
+  matched_stories = col_double(),
+  all_candidate_stories = col_double(),
+  pct_of_all_candidate_stories = col_double(),
+  query = col_character()
+))
+```
+My current plan is to examine media coverage of 2020 presidential candidates and compare the media coverage with polling data. I got the cable news and online media mention data from fivethirtyeight. I do not currently have polling data, but I am looking to use the data from the New York Times, which also includes individual campaign contribution numbers. I only want to look at the top 10 candidates in each respect.
