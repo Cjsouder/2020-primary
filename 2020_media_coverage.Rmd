@@ -1,18 +1,20 @@
 ---
-title: "2020 Media Coverage"
+title: "2020 Media Coverage vs. Public Opinion"
 author: "Hoda Abdalla"
 date: "10/1/2019"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(readxl)
+library(data.table)
+library(rvest)
 ```
 
-```{r}
-x <- read_csv(file = "https://raw.githubusercontent.com/fivethirtyeight/data/master/media-mentions-2020/cable_weekly.csv", 
+```{r Reading in Data, warning = FALSE}
+cable_mentions <- read_csv(file = "https://raw.githubusercontent.com/fivethirtyeight/data/master/media-mentions-2020/cable_weekly.csv", 
               col_types = cols(
   date = col_date(format = ""),
   name = col_character(),
@@ -23,7 +25,7 @@ x <- read_csv(file = "https://raw.githubusercontent.com/fivethirtyeight/data/mas
   query = col_character()
 ))
 
-y <- read_csv(file = "https://raw.githubusercontent.com/fivethirtyeight/data/master/media-mentions-2020/online_weekly.csv",
+online_mentions <- read_csv(file = "https://raw.githubusercontent.com/fivethirtyeight/data/master/media-mentions-2020/online_weekly.csv",
               col_types = cols(
   date = col_date(format = ""),
   name = col_character(),
@@ -32,5 +34,40 @@ y <- read_csv(file = "https://raw.githubusercontent.com/fivethirtyeight/data/mas
   pct_of_all_candidate_stories = col_double(),
   query = col_character()
 ))
+
+polling_data <- read_csv(file = "https://projects.fivethirtyeight.com/polls-page/president_primary_polls.csv", col_types = cols(
+  .default = col_character(),
+  question_id = col_double(),
+  poll_id = col_double(),
+  cycle = col_double(),
+  pollster_id = col_double(),
+  sponsor_ids = col_number(),
+  pollster_rating_id = col_double(),
+  sample_size = col_double(),
+  sponsor_candidate = col_logical(),
+  internal = col_logical(),
+  partisan = col_logical(),
+  tracking = col_logical(),
+  nationwide_batch = col_logical(),
+  pct = col_double()
+))
+
+betting_data <- read_xlsx("raw-data/2020_betting_data.xlsx")
 ```
-My current plan is to examine media coverage of 2020 presidential candidates and compare the media coverage with polling data. I got the cable news and online media mention data from fivethirtyeight. I do not currently have polling data, but I am looking to use the data from the New York Times, which also includes individual campaign contribution numbers. I only want to look at the top 10 candidates in each respect.
+
+
+```{r Graphic}
+betting_data %>%
+  group_by(ContractName) %>%
+  filter(ContractName %in% c("Warren", "Biden", "Sanders", "Buttigieg", "Harris", "Yang", "O'Rourke", "Booker", "Klobuchar", "Castro")) %>%
+  summarise(OpenSharePrice = mean(OpenSharePrice))  %>%
+ggplot(aes(x = ContractName, y = OpenSharePrice, fill = ContractName)) +
+  geom_col() +
+  guides(fill = FALSE) +
+  labs(title = "Average Betting Price for 2020 Democratic Presidential Nomination", subtitle = "Top 10 Candidates, 7/12/2019- 10/9/2019") +
+  xlab("Candidate") +
+  ylab("Betting Price in U.S. dollars")
+
+```
+
+Represents the average betting price of the top 10 candidates for the 2020 democratic presidential nomination based on aggregated polling data from FiveThirtyEight. The betting data was retrieved from PredictIt.
