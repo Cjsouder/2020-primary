@@ -1,0 +1,17 @@
+---
+title: "About Draft"
+author: "Hoda Abdalla"
+date: "10/18/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+There are currently over a dozen candidates running for the 2020 Democratic nomination for president of the United States. In the early stages of the nomination process, there has been lots of contention over the role of the mainstream media and it's role in shaping public opinion and ultimately the outcome of the primary.
+
+
+This project explores this with cable mentions data, online mentions data, and polling data from FiveThirtyEight and betting data from PredictIt. The cable mentions data contains the mentions of currently declared major candidates for the 2020 Democratic primary since December 30, 2018 across CNN, Fox News, and MSNBC. Coverage is measured by splitting daily news footage into 15-second clips and finding the clips that contain a mention of the candidates' first and last names. The online mentions data contains the mentions of currently declared major candidates in online news stories. The polling data is measured by aggregating national polling from several credible polling agencies on the major candidates. The betting data represents the latest "Yes" price offered for 24 declared and undeclared presidential candidates. This data allows for the evaluation of the 2020 media coverage by comparing the coverage to public opinion through the polling and betting data.
+
