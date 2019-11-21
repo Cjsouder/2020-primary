@@ -7,15 +7,18 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-library(tidyverse)
 library(readxl)
 library(data.table)
 library(rvest)
+library(tidyverse)
 ```
 
 ```{r Reading in Data, warning = FALSE}
-cable_mentions <- read_csv(file = "https://raw.githubusercontent.com/fivethirtyeight/data/master/media-mentions-2020/cable_weekly.csv", 
-              col_types = cols(
+
+
+download.file("https://raw.githubusercontent.com/fivethirtyeight/data/master/media-mentions-2020/cable_weekly.csv", "./raw-data/cable_mentions.csv", mode = "wb")
+
+cable_mentions <- read_csv("raw-data/cable_mentions.csv", col_types = cols(
   date = col_date(format = ""),
   name = col_character(),
   matched_clips = col_double(),
@@ -25,8 +28,12 @@ cable_mentions <- read_csv(file = "https://raw.githubusercontent.com/fivethirtye
   query = col_character()
 ))
 
-online_mentions <- read_csv(file = "https://raw.githubusercontent.com/fivethirtyeight/data/master/media-mentions-2020/online_weekly.csv",
-              col_types = cols(
+
+
+download.file("https://raw.githubusercontent.com/fivethirtyeight/data/master/media-mentions-2020/online_weekly.csv", "./raw-data/online_mentions.csv", mode = "wb")
+
+
+online_mentions <- read_csv("raw-data/online_mentions.csv", col_types = cols(
   date = col_date(format = ""),
   name = col_character(),
   matched_stories = col_double(),
@@ -35,7 +42,10 @@ online_mentions <- read_csv(file = "https://raw.githubusercontent.com/fivethirty
   query = col_character()
 ))
 
-polling_data <- read_csv(file = "https://projects.fivethirtyeight.com/polls-page/president_primary_polls.csv", col_types = cols(
+
+download.file("https://projects.fivethirtyeight.com/polls-page/president_primary_polls.csv", "./raw-data/polling.csv", mode = "wb")
+
+polling <- read_csv("raw-data/polling.csv", col_types = cols(
   .default = col_character(),
   question_id = col_double(),
   poll_id = col_double(),
@@ -46,28 +56,53 @@ polling_data <- read_csv(file = "https://projects.fivethirtyeight.com/polls-page
   sample_size = col_double(),
   sponsor_candidate = col_logical(),
   internal = col_logical(),
-  partisan = col_logical(),
   tracking = col_logical(),
   nationwide_batch = col_logical(),
+  notes = col_logical(),
+  candidate_id = col_double(),
   pct = col_double()
 ))
 
-betting_data <- read_xlsx("raw-data/2020_betting_data.xlsx")
+betting <- read_xlsx("raw-data/2020_betting_data.xlsx")
+```
+
+```{r}
+polling <-
+  polling %>%
+  mutate(name = answer) %>%
+  dplyr::select(name, pct)
+
+
+betting <- betting %>%
+  mutate(name = ContractName) %>%
+  dplyr::select(name, Date, OpenSharePrice)
+
+online_mentions <- online_mentions %>%
+  mutate(name = sapply(strsplit(name, ' '), function(x) x[length(x)])) %>%
+  dplyr::select(name, date, matched_stories) %>%
+mutate(month = format(as.Date(date, format="%Y/%m/%d"),"%m")) %>%
+   mutate(month = as.integer(month, format = "%m")) %>%
+  filter(month == 10)
+
+cable_mentions <- cable_mentions %>% 
+  mutate(name = sapply(strsplit(name, ' '), function(x) x[length(x)])) %>%
+  dplyr::select(name, date, matched_clips) %>%
+  mutate(month = format(as.Date(date, format="%Y/%m/%d"),"%m")) %>%
+   mutate(month = as.integer(month, format = "%m")) %>%
+  filter(month == 10)
+
+data <- 
+  Reduce(function(...) merge(..., all=TRUE), list(online_mentions, cable_mentions, polling, betting)) %>%
+   mutate(month = format(as.Date(date, format="%Y/%m/%d"),"%m")) %>%
+   mutate(month = as.integer(month, format = "%m")) %>%
+  filter(month == 10) %>%
+  group_by(name) %>%
+  summarise(percent = mean(pct, na.rm = TRUE), stories = mean(matched_stories, na.rm = TRUE), clips = mean(matched_clips, na.rm = TRUE), price = mean(OpenSharePrice, na.rm = TRUE))
+
+write_rds(data, path = "raw-data/data.rds")
+
+
+
 ```
 
 
-```{r Graphic}
-betting_data %>%
-  group_by(ContractName) %>%
-  filter(ContractName %in% c("Warren", "Biden", "Sanders", "Buttigieg", "Harris", "Yang", "O'Rourke", "Booker", "Klobuchar", "Castro")) %>%
-  summarise(OpenSharePrice = mean(OpenSharePrice))  %>%
-ggplot(aes(x = ContractName, y = OpenSharePrice, fill = ContractName)) +
-  geom_col() +
-  guides(fill = FALSE) +
-  labs(title = "Average Betting Price for 2020 Democratic Presidential Nomination", subtitle = "Top 10 Candidates, 7/12/2019- 10/9/2019") +
-  xlab("Candidate") +
-  ylab("Betting Price in U.S. dollars")
-
-```
-
-Represents the average betting price of the top 10 candidates for the 2020 democratic presidential nomination based on aggregated polling data from FiveThirtyEight. The betting data was retrieved from PredictIt.
