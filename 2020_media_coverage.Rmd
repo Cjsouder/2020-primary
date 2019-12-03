@@ -15,8 +15,10 @@ library(tidyverse)
 
 ```{r Reading in Data, warning = FALSE}
 
+#I read in the four datasets using download.file and read_csv for the #fivethirtyeight files and read in the excel sheet with the betting data
 
 download.file("https://raw.githubusercontent.com/fivethirtyeight/data/master/media-mentions-2020/cable_weekly.csv", "./raw-data/cable_mentions.csv", mode = "wb")
+
 
 cable_mentions <- read_csv("raw-data/cable_mentions.csv", col_types = cols(
   date = col_date(format = ""),
@@ -66,43 +68,46 @@ polling <- read_csv("raw-data/polling.csv", col_types = cols(
 betting <- read_xlsx("raw-data/2020_betting_data.xlsx")
 ```
 
-```{r}
+```{r Cleaning and Merging Data}
+
+#I cleaned each dataset by mutating a name column and month column. I then merged all of the datasets together to be able to plot easier in the shiny app. 
+
+
 polling <-
   polling %>%
   mutate(name = answer) %>%
-  dplyr::select(name, pct)
+  mutate(month = format(as.Date(end_date, format="%m/%d/%Y"),"%m")) %>%
+   mutate(month = as.integer(month, format = "%m")) %>%
+  dplyr::select(name, pct, month)
 
 
 betting <- betting %>%
   mutate(name = ContractName) %>%
-  dplyr::select(name, Date, OpenSharePrice)
+  dplyr::select(name, Date, OpenSharePrice) %>%
+  mutate(month = format(as.Date(Date, format="%Y/%m/%d"),"%m")) %>%
+   mutate(month = as.integer(month, format = "%m"))
 
 online_mentions <- online_mentions %>%
   mutate(name = sapply(strsplit(name, ' '), function(x) x[length(x)])) %>%
   dplyr::select(name, date, matched_stories) %>%
 mutate(month = format(as.Date(date, format="%Y/%m/%d"),"%m")) %>%
-   mutate(month = as.integer(month, format = "%m")) %>%
-  filter(month == 10)
+   mutate(month = as.integer(month, format = "%m"))
 
 cable_mentions <- cable_mentions %>% 
   mutate(name = sapply(strsplit(name, ' '), function(x) x[length(x)])) %>%
   dplyr::select(name, date, matched_clips) %>%
   mutate(month = format(as.Date(date, format="%Y/%m/%d"),"%m")) %>%
-   mutate(month = as.integer(month, format = "%m")) %>%
-  filter(month == 10)
+   mutate(month = as.integer(month, format = "%m"))
 
 data <- 
   Reduce(function(...) merge(..., all=TRUE), list(online_mentions, cable_mentions, polling, betting)) %>%
-   mutate(month = format(as.Date(date, format="%Y/%m/%d"),"%m")) %>%
-   mutate(month = as.integer(month, format = "%m")) %>%
-  filter(month == 10) %>%
-  group_by(name) %>%
+  group_by(name, month) %>%
   summarise(percent = mean(pct, na.rm = TRUE), stories = mean(matched_stories, na.rm = TRUE), clips = mean(matched_clips, na.rm = TRUE), price = mean(OpenSharePrice, na.rm = TRUE))
 
+
+#I used write_rds to save dataset into rds format in the raw-data directory.
+
 write_rds(data, path = "raw-data/data.rds")
-
-
-
 ```
 
 

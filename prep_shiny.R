@@ -1,12 +1,6 @@
 library(fs)
 
-
-
-file_copy(path = "graphics/cablegraph.gif", new_path = "2020_Primary/cablegraph.gif")
-
-file_copy(path = "graphics/onlinegraph.gif", new_path = "2020_Primary/onlinegraph.gif")
-
-file_copy(path = "raw-data/cable_mentions.csv", new_path = "2020_Primary/cable_mentions.csv")
+#Used file_copy to copy the rds file into the 2020_Primary shinyapp file
 
 file_copy(path = "raw-data/data.rds", new_path = "2020_Primary/data.rds")
 
