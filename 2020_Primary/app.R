@@ -10,11 +10,12 @@
 
 library(shiny)
 library(shinythemes)
+library(cowplot)
 library(tidyverse)
 
 # Read in rds file with cleaned up data
 
-clean_data <- readRDS("data.rds")
+clean_data <- readRDS("cleaned_data.rds")
    
 
 # I defined input choices for factors that represent media type and outcomes outside of my UI.
@@ -53,13 +54,36 @@ fluidPage(
         
         mainPanel(
             tabsetPanel(type = "tabs",
-                        tabPanel("About", htmlOutput("about")),
-                        tabPanel("Data", 
+                        tabPanel("Summary Plots", 
+                                 h3("Candidate Cable vs. Online Mentions"), 
+                                 plotOutput("plot2"),
+                                 p("These two plots show the average cable and online media mentions
+                                 in 2019 for each major 2020 Democratic Presidential Candidate."),
+                                 h3("Candidate Betting Share Price vs. Polling"),
+                                 plotOutput("plot3"),
+                         p("These two plots show the average betting share price and polling percentage
+                         in 2019 for each major 2020 Democratic Presidential Candidate.")),
+                      
+                        tabPanel("Explore the Relationship", 
                                  plotOutput("plot"),
                                  h3("Results"),
                                  p("The data confirmed my hypothesis. 
                                    Overall, as average media and online mentions increases, 
-                                   poll percentage and betting price also increases."))
+                                   poll percentage and betting price also increases.
+                                   However, the relationship between both online and cable mentions and 
+                                   share price is not as strong as mentions and polling percentage.
+                                   The key difference between polling and share price is that polls
+                                   answer the question of who voters support for the nomination, whereas
+                                   share prices reflect who the public believes will win the nomination.
+                                   Creating the  linear models revealed that as cable news clips increased, 
+                                   share price increases by 0.0001737. As online news stories increases, share
+                                   price increases by 0.0002396. This leads to the conclusion that online
+                                   news mentions has a greater effect on share price than cable mentions.
+                                   Looking at polling percentage, as cable news increases, polling percent
+                                   increases by 0.01853. As online news stories increases, polling percent
+                                   increases by 0.02433. This means that online news stories also has a greater
+                                   impact on polling percentage than cable mentions.")),
+                        tabPanel("About", htmlOutput("about"))
         )
     )))
 
@@ -112,8 +136,11 @@ server <- function(input, output) {
         str5 <- paste("Hypotheses")
         str6 <- paste("I hypothesized that there will be a positive correlation between both types of
                       media coverage and betting and polling outcomes.")
+        str7 <- paste("Contact")
+        str8 <- paste("This project was completed by Hoda Abdalla. I can be contacted at hodaabdalla@college.harvard.edu
+                      and my github repo can be accessed at https://github.com/hodaeabdalla/2020-primary.")
         
-        HTML(paste(h3(str1), p(str2), h3(str3), p(str4), h3(str5), p(str6)))
+        HTML(paste(h3(str1), p(str2), h3(str3), p(str4), h3(str5), p(str6), h3(str7), p (str8)))
     })
     
     #I piped the clean data into a ggplot of outcome vs. media for the data tab. 
@@ -123,14 +150,83 @@ server <- function(input, output) {
     output$plot <- renderPlot({
         
         clean_data %>% 
+        group_by(name) %>%
             ggplot(aes_string(x = input$Media, y = input$outcome)) + 
             geom_point() +
             labs(x = x_label(),
                  y = y_label()) +
-        geom_smooth(method = "lm", se = FALSE)
+        geom_smooth(method = "lm", se = FALSE) +
+        labs(title = "The Effect of Media Mentions on Candidate Outcomes")
         
     })
+  
     
+    p1 <- clean_data %>%
+      group_by(name) %>% 
+      drop_na() %>%
+      ggplot(aes(x = reorder(name, -clips), y = clips)) +
+      geom_point(size=2) + 
+      geom_segment(aes(x=name, 
+                       xend=name, 
+                       y=0, 
+                       yend=clips)) +
+      theme(axis.text.x = element_text(angle=70, vjust=0.6)) +
+      labs(title = "Cable Mentions", 
+           x = "Candidate",
+           y = "Mean Number of Mentions")
+    
+    p2 <- clean_data %>%
+      group_by(name) %>% 
+      drop_na() %>%
+      ggplot(aes(x = reorder(name, -stories), y = stories)) +
+      geom_point(size=2) + 
+      geom_segment(aes(x=name, 
+                       xend=name, 
+                       y=0, 
+                       yend=stories)) +
+      theme(axis.text.x = element_text(angle=70, vjust=0.6)) +
+      labs(title = "Online Mentions", 
+           x = "Candidate",
+           y = "Mean Number of Mentions")
+    
+    output$plot2 <- renderPlot({
+      
+      plot_grid(p1, p2)
+    })
+    
+    p3 <- clean_data %>%
+      group_by(name) %>%
+      drop_na() %>%
+      ggplot(aes(x = reorder(name, -price), y = price)) +
+      geom_point(size=2) + 
+      geom_segment(aes(x=name, 
+                       xend=name, 
+                       y=0, 
+                       yend=price)) +
+      theme(axis.text.x = element_text(angle=70, vjust=0.6)) +
+      labs(title = "Share Price", 
+           x = "Candidate",
+           y = "Mean Price")
+    
+    p4 <- clean_data %>%
+      group_by(name) %>%
+      drop_na() %>%
+      ggplot(aes(x = reorder(name, -percent), y = percent)) +
+      geom_point(size=2) + 
+      geom_segment(aes(x=name, 
+                       xend=name, 
+                       y=0, 
+                       yend=percent)) +
+      theme(axis.text.x = element_text(angle=70, vjust=0.6)) +
+      labs(title = "Polling Percent", 
+           x = "Candidate",
+           y = "Mean Percent")
+    
+    
+    output$plot3 <- renderPlot({
+      
+      plot_grid(p3, p4)
+    })
 }
 
 #Use shinyApp function to create shiny app with ui and server

@@ -7,6 +7,8 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+library(moderndive)
+library(gt)
 library(readxl)
 library(data.table)
 library(rvest)
@@ -99,10 +101,22 @@ cable_mentions <- cable_mentions %>%
   mutate(month = format(as.Date(date, format="%Y/%m/%d"),"%m")) %>%
    mutate(month = as.integer(month, format = "%m"))
 
-data <- 
-  Reduce(function(...) merge(..., all=TRUE), list(online_mentions, cable_mentions, polling, betting)) %>%
+clean_data <- 
+Reduce(function(...) merge(..., all=TRUE), list(online_mentions, cable_mentions, polling, betting)) %>%
   group_by(name, month) %>%
   summarise(percent = mean(pct, na.rm = TRUE), stories = mean(matched_stories, na.rm = TRUE), clips = mean(matched_clips, na.rm = TRUE), price = mean(OpenSharePrice, na.rm = TRUE))
+
+
+#I made linear models for the 4 possible combinations of relationships so that
+#I can use the correlation coefficients in my analysis.
+
+price_clips_model <- lm(price ~ clips, clean_data)
+
+price_stories_model <- lm(price ~ stories, clean_data)
+
+pct_clips_model <- lm(percent ~ clips, clean_data)
+
+pct_stories_model <- lm(percent ~ stories, clean_data)
 
 
 #I used write_rds to save dataset into rds format in the raw-data directory.
