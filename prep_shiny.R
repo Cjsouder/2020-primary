@@ -4,3 +4,4 @@ library(fs)
 
 file_copy(path = "raw-data/data.rds", new_path = "2020_Primary/cleaned_data.rds")
 
+file_copy(path = "2020.pdf", new_path = "2020_Primary/www/2020.pdf")

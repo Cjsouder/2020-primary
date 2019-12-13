@@ -144,8 +144,7 @@ server <- function(input, output) {
     })
     
     #I piped the clean data into a ggplot of outcome vs. media for the data tab. 
-    #I decided to not have a title because I felt that the title for the shinyapp
-    #describes the graphic sufficiently.
+
     
     output$plot <- renderPlot({
         
