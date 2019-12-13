@@ -121,7 +121,7 @@ pct_stories_model <- lm(percent ~ stories, clean_data)
 
 #I used write_rds to save dataset into rds format in the raw-data directory.
 
-write_rds(data, path = "raw-data/data.rds")
+write_rds(clean_data, path = "raw-data/data.rds")
 ```
 
 
